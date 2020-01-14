@@ -13,14 +13,24 @@ public $successStatus = 200;
      * 
      * @return \Illuminate\Http\Response 
      */ 
-    public function login(){ 
+    public function login(Request $request){ 
+        $validator = Validator::make($request->all(), [ 
+            'email' => 'required|email', 
+            'password' => 'required', 
+        ]);
+        if ($validator->fails()) { 
+            return response()->json(['status' => false ,'message'=>$validator->errors(), 'payload' => [] ], 404);            
+        }
         if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){ 
             $user = Auth::user(); 
-            $success['token'] =  $user->createToken('MyApp')-> accessToken; 
-            return response()->json(['success' => $success], $this-> successStatus); 
+            $success['token'] =  $user->createToken('MyApp')-> accessToken;
+            $paylod = (object) [
+                'token' => $success['token']
+            ];  
+            return response()->json(['status' => true, 'message' => 'Login Successfully', 'payload' => $paylod], $this-> successStatus); 
         } 
         else{ 
-            return response()->json(['error'=>'Unauthorised'], 401); 
+            return response()->json(['status'=>false,'message'=>'Login Failed', 'payload' => [] ], 401); 
         } 
     }
 /** 
@@ -55,7 +65,12 @@ public $successStatus = 200;
      */ 
     public function details() 
     { 
-        $user = Auth::user(); 
-        return response()->json(['success' => $user], $this-> successStatus); 
+        $user = Auth::user();
+        $paylod = (object) [
+            'uu_id' => $user['id'],
+            'u_email' => $user['email'],
+            // 'u_password'=>bcrypt($user['password'])
+        ]; 
+        return  response()->json(['status' => true, 'message' => 'Details Found Successfully','payload' =>$paylod], $this->successStatus); 
     } 
 }
